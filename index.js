@@ -23,15 +23,15 @@ const {
     ConfigurationBotFrameworkAuthentication
 } = require('botbuilder');
 
-const { FlightBookingRecognizer } = require('./dialogs/flightBookingRecognizer');
+const { FlightBookingDialog, FLIGHT_BOOKING_DIALOG } = require('./dialogs/flightBookingDialog');
+
+const airportService = require('./services/airportService');
+const azureOpenAIService = require('./services/azureOpenAIService');
+const flightService = require('./services/flightService');
 
 // This bot's main dialog.
 const { DialogAndWelcomeBot } = require('./bots/dialogAndWelcomeBot');
 const { MainDialog } = require('./dialogs/mainDialog');
-
-// the bot's booking dialog
-const { BookingDialog } = require('./dialogs/bookingDialog');
-const BOOKING_DIALOG = 'bookingDialog';
 
 const botFrameworkAuthentication = new ConfigurationBotFrameworkAuthentication(process.env);
 
@@ -77,15 +77,9 @@ const memoryStorage = new MemoryStorage();
 const conversationState = new ConversationState(memoryStorage);
 const userState = new UserState(memoryStorage);
 
-// If configured, pass in the FlightBookingRecognizer.  (Defining it externally allows it to be mocked for tests)
-const { LuisAppId, LuisAPIKey, LuisAPIHostName } = process.env;
-const luisConfig = { applicationId: LuisAppId, endpointKey: LuisAPIKey, endpoint: `https://${ LuisAPIHostName }` };
-
-const luisRecognizer = new FlightBookingRecognizer(luisConfig);
-
-// Create the main dialog.
-const bookingDialog = new BookingDialog(BOOKING_DIALOG);
-const dialog = new MainDialog(luisRecognizer, bookingDialog);
+// Create the main dialog by passing the flight booking dialog.
+const flightBookingDialog = new FlightBookingDialog();
+const dialog = new MainDialog(flightBookingDialog);
 const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
 
 // Create HTTP server
